@@ -8,14 +8,17 @@ import CalendarView from "./components/CalendarView";
 import EventForm from "./components/EventForm";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon, Sparkles, Plus, LogIn } from "lucide-react";
+import { Calendar as CalendarIcon, Sparkles, Plus, LogIn, AlertCircle } from "lucide-react";
 import { parseEventWithGemini } from "@/lib/gemini";
 import { format } from 'date-fns';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [nlpInput, setNlpInput] = useState("");
+  const [conflicts, setConflicts] = useState<Event[]>([]);
+  const [suggestions, setSuggestions] = useState<Date[]>([]);
   const { toast } = useToast();
 
   const { data: events = [], isLoading } = useQuery<Event[]>({
@@ -27,10 +30,23 @@ export default function Calendar() {
       const res = await apiRequest("POST", "/api/events", event);
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
-      toast({ title: "Event created successfully" });
-      setSelectedDate(null);
+    onSuccess: (data) => {
+      // Check for conflicts
+      if (data.conflicts?.length > 0) {
+        setConflicts(data.conflicts);
+        setSuggestions(data.suggestions || []);
+        toast({ 
+          title: "Scheduling Conflict Detected", 
+          description: "There are conflicting events. Please choose a different time or review suggestions.",
+          variant: "destructive"
+        });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+        toast({ title: "Event created successfully" });
+        setSelectedDate(null);
+        setConflicts([]);
+        setSuggestions([]);
+      }
     },
     onError: (error) => {
       toast({ 
@@ -46,10 +62,22 @@ export default function Calendar() {
       const res = await apiRequest("PATCH", `/api/events/${id}`, event);
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
-      toast({ title: "Event updated successfully" });
-      setSelectedEvent(null);
+    onSuccess: (data) => {
+      if (data.conflicts?.length > 0) {
+        setConflicts(data.conflicts);
+        setSuggestions(data.suggestions || []);
+        toast({ 
+          title: "Scheduling Conflict Detected", 
+          description: "There are conflicting events. Please choose a different time or review suggestions.",
+          variant: "destructive"
+        });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+        toast({ title: "Event updated successfully" });
+        setSelectedEvent(null);
+        setConflicts([]);
+        setSuggestions([]);
+      }
     },
     onError: (error) => {
       toast({ 
@@ -92,12 +120,14 @@ export default function Calendar() {
         throw new Error("Could not understand the event details. Please try being more specific with the time and title.");
       }
 
-      await createMutation.mutateAsync(parsedEvent);
-      setNlpInput("");
-      toast({
-        title: "Event created successfully",
-        description: `Created "${parsedEvent.title}" starting at ${format(new Date(parsedEvent.startTime), 'PPp')}`,
-      });
+      const result = await createMutation.mutateAsync(parsedEvent);
+      if (!result.conflicts?.length) {
+        setNlpInput("");
+        toast({
+          title: "Event created successfully",
+          description: `Created "${parsedEvent.title}" starting at ${format(new Date(parsedEvent.startTime), 'PPp')}`,
+        });
+      }
     } catch (error) {
       console.error('Error creating event:', error);
       toast({
@@ -107,6 +137,28 @@ export default function Calendar() {
           : "Please try being more specific with the event details.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleSuggestedTime = (suggestedTime: Date) => {
+    const duration = selectedEvent 
+      ? new Date(selectedEvent.endTime).getTime() - new Date(selectedEvent.startTime).getTime()
+      : 3600000; // 1 hour default
+
+    const endTime = new Date(suggestedTime.getTime() + duration);
+
+    if (selectedEvent) {
+      updateMutation.mutate({
+        ...selectedEvent,
+        startTime: suggestedTime,
+        endTime,
+      });
+    } else {
+      createMutation.mutate({
+        ...(selectedEvent || {}),
+        startTime: suggestedTime,
+        endTime,
+      } as any);
     }
   };
 
@@ -167,11 +219,50 @@ export default function Calendar() {
         </div>
       </main>
 
-      <Dialog open={!!selectedDate} onOpenChange={() => setSelectedDate(null)}>
+      <Dialog open={!!selectedDate} onOpenChange={() => {
+        setSelectedDate(null);
+        setConflicts([]);
+        setSuggestions([]);
+      }}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Create New Event</DialogTitle>
           </DialogHeader>
+          {conflicts.length > 0 && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Scheduling Conflict</AlertTitle>
+              <AlertDescription>
+                <div className="mt-2 space-y-2">
+                  <p>This event conflicts with:</p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    {conflicts.map((conflict) => (
+                      <li key={conflict.id}>
+                        {conflict.title} ({format(new Date(conflict.startTime), 'PPp')})
+                      </li>
+                    ))}
+                  </ul>
+                  {suggestions.length > 0 && (
+                    <div className="mt-4">
+                      <p className="font-semibold mb-2">Suggested alternative times:</p>
+                      <div className="space-y-2">
+                        {suggestions.map((time, index) => (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            className="w-full justify-start"
+                            onClick={() => handleSuggestedTime(time)}
+                          >
+                            {format(time, 'PPp')}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
           <EventForm
             initialDate={selectedDate}
             onSubmit={(data) => createMutation.mutate(data)}
@@ -180,11 +271,50 @@ export default function Calendar() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
+      <Dialog open={!!selectedEvent} onOpenChange={() => {
+        setSelectedEvent(null);
+        setConflicts([]);
+        setSuggestions([]);
+      }}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Edit Event</DialogTitle>
           </DialogHeader>
+          {conflicts.length > 0 && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Scheduling Conflict</AlertTitle>
+              <AlertDescription>
+                <div className="mt-2 space-y-2">
+                  <p>This event conflicts with:</p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    {conflicts.map((conflict) => (
+                      <li key={conflict.id}>
+                        {conflict.title} ({format(new Date(conflict.startTime), 'PPp')})
+                      </li>
+                    ))}
+                  </ul>
+                  {suggestions.length > 0 && (
+                    <div className="mt-4">
+                      <p className="font-semibold mb-2">Suggested alternative times:</p>
+                      <div className="space-y-2">
+                        {suggestions.map((time, index) => (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            className="w-full justify-start"
+                            onClick={() => handleSuggestedTime(time)}
+                          >
+                            {format(time, 'PPp')}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
           <EventForm
             event={selectedEvent}
             onSubmit={(data) => updateMutation.mutate(data as Event)}
