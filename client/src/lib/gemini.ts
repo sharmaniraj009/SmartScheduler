@@ -22,6 +22,13 @@ interface ParsedEvent {
 }
 
 export async function parseEventWithGemini(input: string): Promise<InsertEvent | null> {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+  if (!apiKey) {
+    console.error('Gemini API key is not configured');
+    throw new Error('Gemini API key is missing. Please make sure it is properly configured.');
+  }
+
   const now = new Date();
   const prompt = `As an AI calendar assistant, parse the following text into a calendar event. Extract the following details:
 - title (required): A clear, concise event title
@@ -46,10 +53,11 @@ Respond ONLY with the JSON object, no other text. Ensure all dates are in ISO fo
   try {
     console.log("Sending request to Gemini API with input:", input);
 
-    const response = await fetch(`${GEMINI_API_URL}?key=${import.meta.env.VITE_GEMINI_API_KEY}`, {
+    const response = await fetch(GEMINI_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey,
       },
       body: JSON.stringify({
         contents: [{
