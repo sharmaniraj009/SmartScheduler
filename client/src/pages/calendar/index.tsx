@@ -9,6 +9,7 @@ import EventForm from "./components/EventForm";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, Sparkles, Plus, LogIn } from "lucide-react";
+import { parseEventWithGemini } from "@/lib/gemini";
 
 export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -78,11 +79,27 @@ export default function Calendar() {
 
   const handleNlpCreate = async () => {
     if (!nlpInput.trim()) return;
+
     toast({ 
       title: "Processing...",
       description: "Using AI to create your event",
     });
-    setNlpInput("");
+
+    try {
+      const parsedEvent = await parseEventWithGemini(nlpInput);
+      if (!parsedEvent) {
+        throw new Error("Could not parse the event details");
+      }
+
+      await createMutation.mutateAsync(parsedEvent);
+      setNlpInput("");
+    } catch (error) {
+      toast({
+        title: "Failed to create event",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
