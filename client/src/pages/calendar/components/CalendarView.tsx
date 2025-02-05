@@ -1,9 +1,10 @@
-import { Calendar, dateFnsLocalizer } from "react-big-calendar";
+import { Calendar, dateFnsLocalizer, SlotInfo } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { enUS } from "date-fns/locale";
 import type { Event } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import "./calendar-styles.css";
 
 const locales = {
   "en-US": enUS,
@@ -41,10 +42,12 @@ export default function CalendarView({
       startAccessor="startTime"
       endAccessor="endTime"
       style={{ height: 800 }}
-      onSelectSlot={({ start }) => onSelectSlot(start)}
+      onSelectSlot={(slotInfo: SlotInfo) => onSelectSlot(slotInfo.start)}
       onSelectEvent={onSelectEvent}
       selectable
-      className="bg-card rounded-lg shadow-sm p-4"
+      className="calendar-custom bg-card rounded-lg shadow-sm p-4"
+      tooltipAccessor={(event: Event) => event.description || event.title}
+      views={["month", "week", "day"]}
     />
   );
 }
