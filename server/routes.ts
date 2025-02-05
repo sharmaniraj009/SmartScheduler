@@ -13,8 +13,8 @@ export function registerRoutes(app: Express) {
   app.post("/api/events", async (req, res) => {
     try {
       const event = insertEventSchema.parse(req.body);
-      const created = await storage.createEvent(event);
-      res.json(created);
+      const { event: created, conflicts, suggestions } = await storage.createEvent(event);
+      res.json({ event: created, conflicts, suggestions });
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid event data", errors: error.errors });
@@ -32,11 +32,11 @@ export function registerRoutes(app: Express) {
 
     try {
       const updateData = insertEventSchema.partial().parse(req.body);
-      const updated = await storage.updateEvent(id, updateData);
+      const { event: updated, conflicts, suggestions } = await storage.updateEvent(id, updateData);
       if (!updated) {
         return res.status(404).json({ message: "Event not found" });
       }
-      res.json(updated);
+      res.json({ event: updated, conflicts, suggestions });
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid event data", errors: error.errors });
