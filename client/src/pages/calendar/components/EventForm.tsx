@@ -31,23 +31,43 @@ export default function EventForm({
   isLoading,
 }: EventFormProps) {
   const form = useForm<InsertEvent>({
-    resolver: zodResolver(insertEventSchema),
-    defaultValues: event ? {
-      ...event,
-      startTime: format(new Date(event.startTime), "yyyy-MM-dd'T'HH:mm"),
-      endTime: format(new Date(event.endTime), "yyyy-MM-dd'T'HH:mm"),
-    } : {
-      title: "",
-      description: "",
-      startTime: initialDate ? format(initialDate, "yyyy-MM-dd'T'HH:mm") : "",
-      endTime: initialDate ? format(addHours(initialDate, 1), "yyyy-MM-dd'T'HH:mm") : "",
-      location: "",
-    },
+    resolver: zodResolver(
+      insertEventSchema.extend({
+        startTime: insertEventSchema.shape.startTime,
+        endTime: insertEventSchema.shape.endTime,
+      })
+    ),
+    defaultValues: event
+      ? {
+          ...event,
+          startTime: format(new Date(event.startTime), "yyyy-MM-dd'T'HH:mm"),
+          endTime: format(new Date(event.endTime), "yyyy-MM-dd'T'HH:mm"),
+        }
+      : {
+          title: "",
+          description: "",
+          startTime: initialDate
+            ? format(initialDate, "yyyy-MM-dd'T'HH:mm")
+            : format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+          endTime: initialDate
+            ? format(addHours(initialDate, 1), "yyyy-MM-dd'T'HH:mm")
+            : format(addHours(new Date(), 1), "yyyy-MM-dd'T'HH:mm"),
+          location: "",
+        },
   });
+
+  const handleSubmit = (data: InsertEvent) => {
+    const formattedData = {
+      ...data,
+      startTime: new Date(data.startTime).toISOString(),
+      endTime: new Date(data.endTime).toISOString(),
+    };
+    onSubmit(formattedData);
+  };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="title"
@@ -69,7 +89,7 @@ export default function EventForm({
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea {...field} value={field.value || ''} />
+                <Textarea {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -84,7 +104,11 @@ export default function EventForm({
               <FormItem>
                 <FormLabel>Start Time</FormLabel>
                 <FormControl>
-                  <Input type="datetime-local" {...field} />
+                  <Input
+                    type="datetime-local"
+                    {...field}
+                    value={typeof field.value === 'string' ? field.value : format(field.value, "yyyy-MM-dd'T'HH:mm")}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -98,7 +122,11 @@ export default function EventForm({
               <FormItem>
                 <FormLabel>End Time</FormLabel>
                 <FormControl>
-                  <Input type="datetime-local" {...field} />
+                  <Input
+                    type="datetime-local"
+                    {...field}
+                    value={typeof field.value === 'string' ? field.value : format(field.value, "yyyy-MM-dd'T'HH:mm")}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -113,7 +141,7 @@ export default function EventForm({
             <FormItem>
               <FormLabel>Location</FormLabel>
               <FormControl>
-                <Input {...field} value={field.value || ''} />
+                <Input {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
