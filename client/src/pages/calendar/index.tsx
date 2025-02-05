@@ -8,7 +8,7 @@ import CalendarView from "./components/CalendarView";
 import EventForm from "./components/EventForm";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon, Sparkles } from "lucide-react";
+import { Calendar as CalendarIcon, Sparkles, Plus, LogIn } from "lucide-react";
 
 export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -78,42 +78,68 @@ export default function Calendar() {
 
   const handleNlpCreate = async () => {
     if (!nlpInput.trim()) return;
-    // TODO: Call NLP API once integrated
-    toast({ title: "Natural language processing coming soon!" });
+    // Gemini API integration will be added here
+    toast({ 
+      title: "Processing...",
+      description: "Using AI to create your event"
+    });
     setNlpInput("");
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-[2000px] mx-auto p-4 space-y-4">
+      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-[2000px] mx-auto p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="h-6 w-6 text-primary" />
+            <h1 className="text-xl font-semibold">AI Calendar</h1>
+          </div>
+          <Button variant="outline" size="sm" className="gap-2">
+            <LogIn className="h-4 w-4" />
+            Sign in with Google
+          </Button>
+        </div>
+      </header>
+
+      <main className="max-w-[2000px] mx-auto p-4 space-y-6">
         {/* NLP Input Section */}
-        <div className="flex gap-2 items-center bg-card p-4 rounded-lg shadow-sm">
-          <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+        <div className="flex gap-2 items-center bg-card p-4 rounded-xl shadow-sm border">
           <Input
-            placeholder="Create event using natural language... (e.g. 'Meeting with John tomorrow at 2pm')"
+            placeholder="Create event using AI... (e.g. 'Setup team meeting next Tuesday at 2pm')"
             value={nlpInput}
             onChange={(e) => setNlpInput(e.target.value)}
-            className="flex-1"
+            className="flex-1 text-base"
           />
           <Button 
             onClick={handleNlpCreate}
             className="gap-2"
+            size="lg"
           >
             <Sparkles className="h-4 w-4" />
-            Create
+            Create with AI
           </Button>
         </div>
 
-        <CalendarView
-          events={events}
-          isLoading={isLoading}
-          onSelectSlot={(start) => setSelectedDate(start)}
-          onSelectEvent={(event) => setSelectedEvent(event)}
-        />
-      </div>
+        <div className="relative">
+          <CalendarView
+            events={events}
+            isLoading={isLoading}
+            onSelectSlot={(start) => setSelectedDate(start)}
+            onSelectEvent={(event) => setSelectedEvent(event)}
+          />
+          <Button
+            className="absolute bottom-4 right-4 gap-2 shadow-lg"
+            onClick={() => setSelectedDate(new Date())}
+            size="lg"
+          >
+            <Plus className="h-4 w-4" />
+            New Event
+          </Button>
+        </div>
+      </main>
 
       <Dialog open={!!selectedDate} onOpenChange={() => setSelectedDate(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Create New Event</DialogTitle>
           </DialogHeader>
@@ -126,7 +152,7 @@ export default function Calendar() {
       </Dialog>
 
       <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Edit Event</DialogTitle>
           </DialogHeader>

@@ -1,21 +1,28 @@
 /* Custom calendar styles */
 .calendar-custom {
   --bg-hover: hsl(var(--primary) / 0.1);
-  --border-color: hsl(var(--border));
+  --border-color: hsl(var(--border) / 0.2);
   --event-bg: hsl(var(--primary));
   --event-text: hsl(var(--primary-foreground));
 }
 
 .calendar-custom .rbc-today {
   background-color: var(--bg-hover);
+  border-radius: 8px;
 }
 
 .calendar-custom .rbc-event {
   background-color: var(--event-bg);
   color: var(--event-text);
   border: none;
-  border-radius: 4px;
-  padding: 2px 6px;
+  border-radius: 8px;
+  padding: 4px 8px;
+  transition: all 0.2s ease;
+}
+
+.calendar-custom .rbc-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .calendar-custom .rbc-event.rbc-selected {
@@ -24,15 +31,20 @@
 }
 
 .calendar-custom .rbc-header {
-  padding: 8px;
-  font-weight: 500;
+  padding: 12px;
+  font-weight: 600;
   border-bottom: 1px solid var(--border-color);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
 }
 
 .calendar-custom .rbc-month-view,
 .calendar-custom .rbc-time-view {
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 16px;
+  background: hsl(var(--background));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .calendar-custom .rbc-day-bg + .rbc-day-bg,
@@ -41,22 +53,44 @@
 }
 
 .calendar-custom .rbc-off-range-bg {
-  background-color: hsl(var(--muted) / 0.3);
+  background-color: hsl(var(--muted) / 0.1);
 }
 
 .calendar-custom .rbc-toolbar button {
   color: hsl(var(--foreground));
   border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 8px 12px;
+  border-radius: 12px;
+  padding: 8px 16px;
   font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .calendar-custom .rbc-toolbar button:hover {
   background-color: var(--bg-hover);
+  transform: translateY(-1px);
 }
 
 .calendar-custom .rbc-toolbar button.rbc-active {
   background-color: var(--event-bg);
   color: var(--event-text);
+  border-color: transparent;
+}
+
+/* Modern scrollbar */
+.calendar-custom ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.calendar-custom ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.calendar-custom ::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+.calendar-custom ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
 }
