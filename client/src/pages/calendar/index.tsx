@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, Sparkles, Plus, LogIn } from "lucide-react";
 import { parseEventWithGemini } from "@/lib/gemini";
+import { format } from 'date-fns';
 
 export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -80,23 +81,30 @@ export default function Calendar() {
   const handleNlpCreate = async () => {
     if (!nlpInput.trim()) return;
 
-    toast({ 
-      title: "Processing...",
-      description: "Using AI to create your event",
+    const toastId = toast({ 
+      title: "Processing with AI...",
+      description: "Analyzing your request and creating an event...",
     });
 
     try {
       const parsedEvent = await parseEventWithGemini(nlpInput);
       if (!parsedEvent) {
-        throw new Error("Could not parse the event details");
+        throw new Error("Could not understand the event details. Please try being more specific with the time and title.");
       }
 
       await createMutation.mutateAsync(parsedEvent);
       setNlpInput("");
-    } catch (error) {
       toast({
-        title: "Failed to create event",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        title: "Event created successfully",
+        description: `Created "${parsedEvent.title}" starting at ${format(new Date(parsedEvent.startTime), 'PPp')}`,
+      });
+    } catch (error) {
+      console.error('Error creating event:', error);
+      toast({
+        title: "Couldn't create event",
+        description: error instanceof Error 
+          ? error.message 
+          : "Please try being more specific with the event details.",
         variant: "destructive",
       });
     }
