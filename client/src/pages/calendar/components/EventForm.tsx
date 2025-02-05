@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertEventSchema } from "@shared/schema";
-import type { Event } from "@shared/schema";
+import type { Event, InsertEvent } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { format, addHours } from "date-fns";
 import {
@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 interface EventFormProps {
   event?: Event | null;
   initialDate?: Date | null;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: InsertEvent) => void;
   onDelete?: () => void;
   isLoading?: boolean;
 }
@@ -30,7 +30,7 @@ export default function EventForm({
   onDelete,
   isLoading,
 }: EventFormProps) {
-  const form = useForm({
+  const form = useForm<InsertEvent>({
     resolver: zodResolver(insertEventSchema),
     defaultValues: event ? {
       ...event,
