@@ -35,12 +35,18 @@ export default function CalendarView({
     return <Skeleton className="w-full h-[800px]" />;
   }
 
+  const formattedEvents = events.map(event => ({
+    ...event,
+    start: new Date(event.startTime),
+    end: new Date(event.endTime),
+  }));
+
   return (
     <Calendar
       localizer={localizer}
-      events={events}
-      startAccessor="startTime"
-      endAccessor="endTime"
+      events={formattedEvents}
+      startAccessor="start"
+      endAccessor="end"
       style={{ height: 800 }}
       onSelectSlot={(slotInfo: SlotInfo) => onSelectSlot(slotInfo.start)}
       onSelectEvent={onSelectEvent}
