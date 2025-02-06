@@ -1,62 +1,51 @@
 /* Custom calendar styles */
 .calendar-custom {
-  --bg-hover: hsl(var(--primary) / 0.1);
-  --border-color: hsl(var(--border) / 0.1);
-  --event-bg: hsl(var(--primary));
+  --bg-hover: hsl(var(--muted) / 0.05);
+  --border-color: hsl(var(--border) / 0.08);
+  --event-bg: hsl(var(--primary) / 0.9);
   --event-text: hsl(var(--primary-foreground));
-  --glass-bg: hsl(var(--background) / 0.7);
+  --glass-bg: hsl(var(--background) / 0.8);
 }
 
 .calendar-custom .rbc-month-view,
 .calendar-custom .rbc-time-view {
   border: 1px solid var(--border-color);
-  border-radius: 24px;
+  border-radius: 8px;
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  box-shadow: 
-    0 4px 24px -1px rgba(0, 0, 0, 0.05),
-    0 0 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .calendar-custom .rbc-today {
   background-color: var(--bg-hover);
-  border-radius: 12px;
-  transition: background-color 0.3s ease;
 }
 
 .calendar-custom .rbc-event {
-  background: linear-gradient(135deg, 
-    hsl(var(--primary)) 0%,
-    hsl(calc(var(--primary-hue) + 20), 85%, 75%) 100%
-  );
+  background-color: var(--event-bg);
   color: var(--event-text);
   border: none;
-  border-radius: 12px;
-  padding: 6px 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
 }
 
 .calendar-custom .rbc-event:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .calendar-custom .rbc-event.rbc-selected {
-  background: linear-gradient(135deg, 
-    hsl(var(--primary)) 0%,
-    hsl(calc(var(--primary-hue) + 40), 85%, 75%) 100%
-  );
+  background-color: var(--event-bg);
+  box-shadow: 0 0 0 1px hsl(var(--primary));
 }
 
 .calendar-custom .rbc-header {
-  padding: 16px;
-  font-weight: 600;
+  padding: 12px;
+  font-weight: 500;
   border-bottom: 1px solid var(--border-color);
-  text-transform: uppercase;
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
-  color: hsl(var(--foreground) / 0.8);
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
 }
 
 .calendar-custom .rbc-day-bg + .rbc-day-bg,
@@ -65,38 +54,37 @@
 }
 
 .calendar-custom .rbc-off-range-bg {
-  background-color: hsl(var(--muted) / 0.05);
+  background-color: transparent;
+}
+
+.calendar-custom .rbc-off-range {
+  color: hsl(var(--muted-foreground) / 0.5);
 }
 
 .calendar-custom .rbc-toolbar {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .calendar-custom .rbc-toolbar button {
   color: hsl(var(--foreground));
-  background: var(--glass-bg);
-  backdrop-filter: blur(8px);
+  background: transparent;
   border: 1px solid var(--border-color);
-  border-radius: 14px;
-  padding: 10px 20px;
-  font-weight: 500;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  font-weight: 400;
+  transition: all 0.2s ease;
 }
 
 .calendar-custom .rbc-toolbar button:hover {
   background-color: var(--bg-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-color: hsl(var(--border));
 }
 
 .calendar-custom .rbc-toolbar button.rbc-active {
-  background: linear-gradient(135deg, 
-    hsl(var(--primary)) 0%,
-    hsl(calc(var(--primary-hue) + 20), 85%, 75%) 100%
-  );
-  color: var(--event-text);
-  border-color: transparent;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+  border-color: hsl(var(--primary) / 0.2);
 }
 
 /* Modern scrollbar */
@@ -110,10 +98,10 @@
 }
 
 .calendar-custom ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
+  background: hsl(var(--muted) / 0.3);
   border-radius: 3px;
 }
 
 .calendar-custom ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground));
+  background: hsl(var(--muted) / 0.4);
 }

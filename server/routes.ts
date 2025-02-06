@@ -3,8 +3,15 @@ import { createServer } from "http";
 import { storage } from "./storage";
 import { insertEventSchema } from "@shared/schema";
 import { z } from "zod";
+import authRouter from "./routes/auth";
 
 export function registerRoutes(app: Express) {
+  console.log('Registering auth routes...');
+
+  // Register auth routes first to ensure they take precedence
+  app.use("/api/auth", authRouter);
+  console.log('Auth routes registered');
+
   app.get("/api/events", async (_req, res) => {
     const events = await storage.getEvents();
     res.json(events);

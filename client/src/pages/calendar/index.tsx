@@ -12,6 +12,14 @@ import { Calendar as CalendarIcon, Sparkles, Plus, LogIn, AlertCircle } from "lu
 import { parseEventWithGemini } from "@/lib/gemini";
 import { format } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/lib/auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -20,6 +28,7 @@ export default function Calendar() {
   const [conflicts, setConflicts] = useState<Event[]>([]);
   const [suggestions, setSuggestions] = useState<Date[]>([]);
   const { toast } = useToast();
+  const { user, login, logout, isLoading: isAuthLoading } = useAuth();
 
   const { data: events = [], isLoading } = useQuery<Event[]>({
     queryKey: ["/api/events"],
@@ -27,11 +36,21 @@ export default function Calendar() {
 
   const createMutation = useMutation({
     mutationFn: async (event: Omit<Event, "id">) => {
-      const res = await apiRequest("POST", "/api/events", event);
+      const eventWithDefaults = {
+        color: null,
+        description: null,
+        location: null,
+        category: null,
+        isRecurring: false,
+        recurrenceRule: null,
+        aiSuggested: true,
+        creatorId: 1, // TODO: Replace with actual user ID after auth
+        ...event
+      };
+      const res = await apiRequest("POST", "/api/events", eventWithDefaults);
       return res.json();
     },
     onSuccess: (data) => {
-      // Check for conflicts
       if (data.conflicts?.length > 0) {
         setConflicts(data.conflicts);
         setSuggestions(data.suggestions || []);
@@ -120,7 +139,19 @@ export default function Calendar() {
         throw new Error("Could not understand the event details. Please try being more specific with the time and title.");
       }
 
-      const result = await createMutation.mutateAsync(parsedEvent);
+      const eventWithDefaults = {
+        color: null,
+        description: null,
+        location: null,
+        category: null,
+        isRecurring: false,
+        recurrenceRule: null,
+        aiSuggested: true,
+        creatorId: 1, // TODO: Replace with actual user ID after auth
+        ...parsedEvent
+      };
+
+      const result = await createMutation.mutateAsync(eventWithDefaults);
       if (!result.conflicts?.length) {
         setNlpInput("");
         toast({
@@ -163,45 +194,67 @@ export default function Calendar() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-background/80">
-      <header className="border-b bg-background/60 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-[2000px] mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <CalendarIcon className="h-5 w-5 text-primary" />
-            </div>
-            <h1 className="text-xl font-semibold tracking-tight">AI Calendar</h1>
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-background/60 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-[2000px] mx-auto px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="h-5 w-5 text-foreground/80" />
+            <h1 className="text-lg font-medium">Calendar</h1>
           </div>
-          <Button variant="outline" size="lg" className="gap-2 px-6">
-            <LogIn className="h-4 w-4" />
-            Sign in with Google
-          </Button>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.picture} alt={user.name} />
+                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium">{user.name}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => logout()}>
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2"
+              onClick={() => login()}
+              disabled={isAuthLoading}
+            >
+              <LogIn className="h-4 w-4" />
+              Sign in with Google
+            </Button>
+          )}
         </div>
       </header>
 
-      <main className="max-w-[2000px] mx-auto p-6 space-y-8">
-        {/* NLP Input Section */}
+      <main className="max-w-[2000px] mx-auto p-6 space-y-6">
         <div className="flex gap-3 items-center">
-          <div className="flex-1 relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 opacity-25 blur-xl transition-all duration-500 group-hover:opacity-50" />
+          <div className="flex-1">
             <Input
-              placeholder="Create event using AI... (e.g. 'Setup team meeting next Tuesday at 2pm')"
+              placeholder="Type to create event... (e.g. 'Team meeting next Tuesday at 2pm')"
               value={nlpInput}
               onChange={(e) => setNlpInput(e.target.value)}
-              className="w-full bg-card/50 backdrop-blur-sm text-base py-6 px-6 rounded-2xl border-0 shadow-sm transition-all duration-300 hover:shadow-md focus:shadow-lg"
+              className="w-full bg-background text-sm py-5 px-4 rounded-md border shadow-sm"
             />
           </div>
           <Button 
             onClick={handleNlpCreate}
-            size="lg"
-            className="gap-2 px-8 h-14 rounded-2xl bg-primary hover:bg-primary/90 transition-all duration-300 hover:shadow-lg hover:scale-105"
+            size="sm"
+            className="gap-2 px-4"
           >
-            <Sparkles className="h-5 w-5" />
-            Create with AI
+            <Sparkles className="h-4 w-4" />
+            Create
           </Button>
         </div>
 
-        <div className="relative rounded-[32px] overflow-hidden border bg-card/50 backdrop-blur-sm shadow-xl">
+        <div className="rounded-lg overflow-hidden border bg-card/50 backdrop-blur-sm shadow-sm">
           <CalendarView
             events={events}
             isLoading={isLoading}
@@ -209,12 +262,13 @@ export default function Calendar() {
             onSelectEvent={(event) => setSelectedEvent(event)}
           />
           <Button
-            className="absolute bottom-6 right-6 gap-2 shadow-lg rounded-2xl px-8 h-14 bg-primary hover:bg-primary/90 transition-all duration-300 hover:scale-105"
+            className="absolute bottom-6 right-6 gap-2 shadow-sm rounded-md"
             onClick={() => setSelectedDate(new Date())}
-            size="lg"
+            size="sm"
+            variant="secondary"
           >
-            <Plus className="h-5 w-5" />
-            New Event
+            <Plus className="h-4 w-4" />
+            Event
           </Button>
         </div>
       </main>

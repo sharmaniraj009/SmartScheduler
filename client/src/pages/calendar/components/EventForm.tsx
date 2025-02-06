@@ -53,6 +53,12 @@ export default function EventForm({
             ? format(addHours(initialDate, 1), "yyyy-MM-dd'T'HH:mm")
             : format(addHours(new Date(), 1), "yyyy-MM-dd'T'HH:mm"),
           location: "",
+          creatorId: 1, // TODO: Replace with actual user ID after auth
+          category: null,
+          color: null,
+          isRecurring: false,
+          recurrenceRule: null,
+          aiSuggested: false,
         },
   });
 
