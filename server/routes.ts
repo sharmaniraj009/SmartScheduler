@@ -3,8 +3,12 @@ import { createServer } from "http";
 import { storage } from "./storage";
 import { insertEventSchema } from "@shared/schema";
 import { z } from "zod";
+import authRouter from "./routes/auth";
 
 export function registerRoutes(app: Express) {
+  // Register auth routes
+  app.use("/api/auth", authRouter);
+
   app.get("/api/events", async (_req, res) => {
     const events = await storage.getEvents();
     res.json(events);
