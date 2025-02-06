@@ -11,11 +11,53 @@ if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  'storagerelay://https/' + process.env.REPL_SLUG + '.' + process.env.REPL_OWNER + '.repl.co'
+  'https://' + process.env.REPL_SLUG + '.' + process.env.REPL_OWNER + '.repl.co/api/auth/callback/google'
 );
 
 const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
+// Handle the initial OAuth flow
+router.get('/google', (req, res) => {
+  const authUrl = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: ['https://www.googleapis.com/auth/calendar', 'profile', 'email'],
+  });
+  res.redirect(authUrl);
+});
+
+// Handle the OAuth callback
+router.get('/callback/google', async (req, res) => {
+  try {
+    const { code } = req.query;
+    const { tokens } = await oauth2Client.getToken(code as string);
+    oauth2Client.setCredentials(tokens);
+
+    const { data } = await google.oauth2('v2').userinfo.get({ auth: oauth2Client });
+
+    if (!data.email) {
+      return res.redirect('/?error=email_not_found');
+    }
+
+    // Create or update user in database
+    const user = {
+      id: 1, // TODO: Replace with actual user management
+      email: data.email,
+      name: data.name || 'User',
+      picture: data.picture,
+    };
+
+    // Create session token
+    const token = jwt.sign(user, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+    res.cookie('session', token, { httpOnly: true, secure: true });
+
+    res.redirect('/');
+  } catch (error) {
+    console.error('Google auth error:', error);
+    res.redirect('/?error=auth_failed');
+  }
+});
+
+// Handle token-based authentication
 router.post('/google', async (req, res) => {
   try {
     const { access_token } = req.body;

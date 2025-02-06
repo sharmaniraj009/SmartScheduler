@@ -33,22 +33,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [session]);
 
-  const login = useGoogleLogin({
-    onSuccess: async (response) => {
-      try {
-        const result = await apiRequest('POST', '/api/auth/google', {
-          access_token: response.access_token,
-        });
-        const data = await result.json();
-        setUser(data.user);
-      } catch (error) {
-        console.error('Login failed:', error);
-      }
-    },
-    flow: 'implicit',
-    scope: 'https://www.googleapis.com/auth/calendar',
-    ux_mode: 'popup',
-  });
+  const login = () => {
+    window.location.href = '/api/auth/google';
+  };
 
   const logout = async () => {
     try {
