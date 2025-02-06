@@ -8,10 +8,13 @@ if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
   throw new Error('Google OAuth credentials are required');
 }
 
+// Construct the redirect URI using the Repl environment variables
+const redirectUri = `https://workspace.sharmaniraj0090.repl.co/api/auth/callback/google`;
+
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  'https://' + process.env.REPL_SLUG + '.' + process.env.REPL_OWNER + '.repl.co/api/auth/callback/google'
+  redirectUri
 );
 
 const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
