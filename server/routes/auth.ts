@@ -11,7 +11,7 @@ if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  `${process.env.VITE_APP_URL}/api/auth/callback/google`
+  'https://' + process.env.REPL_SLUG + '.' + process.env.REPL_OWNER + '.repl.co'
 );
 
 const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
@@ -22,7 +22,7 @@ router.post('/google', async (req, res) => {
     oauth2Client.setCredentials({ access_token });
 
     const { data } = await google.oauth2('v2').userinfo.get({ auth: oauth2Client });
-    
+
     if (!data.email) {
       return res.status(400).json({ error: 'Email not found in Google profile' });
     }
