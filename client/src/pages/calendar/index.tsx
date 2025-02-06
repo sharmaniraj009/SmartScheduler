@@ -12,6 +12,14 @@ import { Calendar as CalendarIcon, Sparkles, Plus, LogIn, AlertCircle } from "lu
 import { parseEventWithGemini } from "@/lib/gemini";
 import { format } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/lib/auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -20,6 +28,7 @@ export default function Calendar() {
   const [conflicts, setConflicts] = useState<Event[]>([]);
   const [suggestions, setSuggestions] = useState<Date[]>([]);
   const { toast } = useToast();
+  const { user, login, logout, isLoading: isAuthLoading } = useAuth();
 
   const { data: events = [], isLoading } = useQuery<Event[]>({
     queryKey: ["/api/events"],
@@ -192,10 +201,36 @@ export default function Calendar() {
             <CalendarIcon className="h-5 w-5 text-foreground/80" />
             <h1 className="text-lg font-medium">Calendar</h1>
           </div>
-          <Button variant="ghost" size="sm" className="gap-2">
-            <LogIn className="h-4 w-4" />
-            Sign in
-          </Button>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.picture} alt={user.name} />
+                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium">{user.name}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => logout()}>
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2"
+              onClick={() => login()}
+              disabled={isAuthLoading}
+            >
+              <LogIn className="h-4 w-4" />
+              Sign in with Google
+            </Button>
+          )}
         </div>
       </header>
 
