@@ -6,8 +6,11 @@ import { z } from "zod";
 import authRouter from "./routes/auth";
 
 export function registerRoutes(app: Express) {
-  // Register auth routes
+  console.log('Registering auth routes...');
+
+  // Register auth routes first to ensure they take precedence
   app.use("/api/auth", authRouter);
+  console.log('Auth routes registered');
 
   app.get("/api/events", async (_req, res) => {
     const events = await storage.getEvents();
