@@ -45,7 +45,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Login failed:', error);
       }
     },
+    flow: 'implicit',
     scope: 'https://www.googleapis.com/auth/calendar',
+    ux_mode: 'popup',
   });
 
   const logout = async () => {
