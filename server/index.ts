@@ -26,6 +26,9 @@ app.use((req, res, next) => {
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
+      if (req.query && Object.keys(req.query).length > 0) {
+        logLine += ` Query: ${JSON.stringify(req.query)}`;
+      }
 
       if (logLine.length > 80) {
         logLine = logLine.slice(0, 79) + "…";
@@ -39,6 +42,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  console.log('Starting server initialization...');
   const server = registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
