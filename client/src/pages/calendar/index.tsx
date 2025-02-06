@@ -27,11 +27,21 @@ export default function Calendar() {
 
   const createMutation = useMutation({
     mutationFn: async (event: Omit<Event, "id">) => {
-      const res = await apiRequest("POST", "/api/events", event);
+      const eventWithDefaults = {
+        color: null,
+        description: null,
+        location: null,
+        category: null,
+        isRecurring: false,
+        recurrenceRule: null,
+        aiSuggested: true,
+        creatorId: 1, // TODO: Replace with actual user ID after auth
+        ...event
+      };
+      const res = await apiRequest("POST", "/api/events", eventWithDefaults);
       return res.json();
     },
     onSuccess: (data) => {
-      // Check for conflicts
       if (data.conflicts?.length > 0) {
         setConflicts(data.conflicts);
         setSuggestions(data.suggestions || []);
@@ -120,7 +130,19 @@ export default function Calendar() {
         throw new Error("Could not understand the event details. Please try being more specific with the time and title.");
       }
 
-      const result = await createMutation.mutateAsync(parsedEvent);
+      const eventWithDefaults = {
+        color: null,
+        description: null,
+        location: null,
+        category: null,
+        isRecurring: false,
+        recurrenceRule: null,
+        aiSuggested: true,
+        creatorId: 1, // TODO: Replace with actual user ID after auth
+        ...parsedEvent
+      };
+
+      const result = await createMutation.mutateAsync(eventWithDefaults);
       if (!result.conflicts?.length) {
         setNlpInput("");
         toast({
@@ -180,7 +202,6 @@ export default function Calendar() {
       </header>
 
       <main className="max-w-[2000px] mx-auto p-6 space-y-8">
-        {/* NLP Input Section */}
         <div className="flex gap-3 items-center">
           <div className="flex-1 relative group">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 opacity-25 blur-xl transition-all duration-500 group-hover:opacity-50" />
